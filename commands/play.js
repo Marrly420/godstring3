@@ -7,9 +7,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("query")
-        .setNameLocalizations({ ar: "اسم" })
         .setDescription("اسم الأغنية أو رابط يوتيوب")
-        .setDescriptionLocalizations({ ar: "اسم الأغنية أو رابط يوتيوب" })
         .setRequired(true)
     ),
 
