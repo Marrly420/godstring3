@@ -6,6 +6,7 @@ services:
     environment:
       - SERVER_PORT=2333
       - LAVALINK_SERVER_PASSWORD=${LAVALINK_PASSWORD}
+      - PLUGINS_YOUTUBE_OAUTH_REFRESHTOKEN=${YOUTUBE_REFRESH_TOKEN}
     networks:
       - godstring3-net
     expose:
