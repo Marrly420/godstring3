@@ -1,0 +1,34 @@
+services:
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4
+    container_name: godstring3-lavalink
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=2333
+      - LAVALINK_SERVER_PASSWORD=${LAVALINK_PASSWORD}
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
+    networks:
+      - godstring3-net
+    expose:
+      - "2333"
+
+  bot:
+    build: .
+    container_name: godstring3-bot
+    restart: unless-stopped
+    depends_on:
+      - lavalink
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CLIENT_ID=${CLIENT_ID}
+      - GUILD_ID=${GUILD_ID}
+      - LAVALINK_HOST=lavalink
+      - LAVALINK_PORT=2333
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD}
+    networks:
+      - godstring3-net
+
+networks:
+  godstring3-net:
+    driver: bridge
