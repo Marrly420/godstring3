@@ -1,13 +1,11 @@
 services:
   lavalink:
-    image: ghcr.io/lavalink-devs/lavalink:4
+    build: ./lavalink
     container_name: godstring3-lavalink
     restart: unless-stopped
     environment:
       - SERVER_PORT=2333
       - LAVALINK_SERVER_PASSWORD=${LAVALINK_PASSWORD}
-    volumes:
-      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
     networks:
       - godstring3-net
     expose:
