@@ -6,13 +6,15 @@ module.exports = {
     .setDescription("يشغل أغنية من يوتيوب بالاسم أو بالرابط")
     .addStringOption((option) =>
       option
-        .setName("اسم")
+        .setName("query")
+        .setNameLocalizations({ ar: "اسم" })
         .setDescription("اسم الأغنية أو رابط يوتيوب")
+        .setDescriptionLocalizations({ ar: "اسم الأغنية أو رابط يوتيوب" })
         .setRequired(true)
     ),
 
   async execute(interaction, client) {
-    const query = interaction.options.getString("اسم", true);
+    const query = interaction.options.getString("query", true);
     const member = interaction.member;
     const voiceChannel = member.voice?.channel;
 
