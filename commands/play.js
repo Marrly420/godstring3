@@ -3,11 +3,11 @@ const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("disc
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("play")
-    .setDescription("يشغل أغنية من يوتيوب بالاسم أو بالرابط")
+    .setDescription("Play a song from YouTube by name or link")
     .addStringOption((option) =>
       option
         .setName("query")
-        .setDescription("اسم الأغنية أو رابط يوتيوب")
+        .setDescription("Song name or YouTube link")
         .setRequired(true)
     ),
 
@@ -18,7 +18,7 @@ module.exports = {
 
     if (!voiceChannel) {
       return interaction.reply({
-        content: "لازم تكون داخل روم صوتي أول عشان تستخدم هذا الأمر.",
+        content: "You need to be in a voice channel to use this command.",
         ephemeral: true,
       });
     }
@@ -30,7 +30,7 @@ module.exports = {
       !permissions.has(PermissionFlagsBits.Speak)
     ) {
       return interaction.reply({
-        content: "ماكو عندي صلاحية الدخول أو التحدث بهذا الروم الصوتي.",
+        content: "I don't have permission to join or speak in that voice channel.",
         ephemeral: true,
       });
     }
@@ -62,7 +62,7 @@ module.exports = {
 
       if (!result || !result.tracks?.length) {
         return interaction.editReply({
-          content: "ما لقيت نتيجة لهذا البحث، جرب اسم ثاني أو رابط مباشر.",
+          content: "No results found for that search. Try a different name or a direct link.",
         });
       }
 
@@ -72,16 +72,16 @@ module.exports = {
       if (isPlaylist) {
         await player.queue.add(result.tracks);
         embed
-          .setTitle("تمت إضافة قائمة تشغيل")
+          .setTitle("Playlist added")
           .setDescription(
-            `**${result.playlist?.name || "قائمة تشغيل"}**\nعدد المقاطع: ${result.tracks.length}`
+            `**${result.playlist?.name || "Playlist"}**\nTracks: ${result.tracks.length}`
           );
       } else {
         const track = result.tracks[0];
         await player.queue.add(track);
         embed
-          .setTitle(player.playing || player.queue.tracks.length > 1 ? "تمت الإضافة إلى قائمة الانتظار" : "جاري التشغيل الآن")
-          .setDescription(`**${track.info.title}**\nبواسطة: ${track.info.author}`)
+          .setTitle(player.playing || player.queue.tracks.length > 1 ? "Added to queue" : "Now playing")
+          .setDescription(`**${track.info.title}**\nBy: ${track.info.author}`)
           .setThumbnail(track.info.artworkUrl || null);
       }
 
@@ -91,8 +91,8 @@ module.exports = {
 
       return interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      console.error("خطأ بأمر /play:", error);
-      const message = "صار خطأ أثناء محاولة التشغيل، جرب مرة ثانية.";
+      console.error("Error in /play command:", error);
+      const message = "Something went wrong while trying to play that. Please try again.";
       if (interaction.deferred || interaction.replied) {
         return interaction.editReply({ content: message });
       }
