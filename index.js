@@ -10,7 +10,7 @@ const { DISCORD_TOKEN, CLIENT_ID, LAVALINK_HOST, LAVALINK_PORT, LAVALINK_PASSWOR
 
 if (!DISCORD_TOKEN || !CLIENT_ID || !LAVALINK_PASSWORD) {
   console.error(
-    "ناقصة متغيرات بيئة أساسية (DISCORD_TOKEN / CLIENT_ID / LAVALINK_PASSWORD). راجع إعدادات البيئة."
+    "Missing required environment variables (DISCORD_TOKEN / CLIENT_ID / LAVALINK_PASSWORD). Check your environment settings."
   );
   process.exit(1);
 }
@@ -19,7 +19,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 
-// ---------- تحميل الأوامر ----------
+// ---------- Load commands ----------
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, "commands");
 for (const file of fs.readdirSync(commandsPath).filter((f) => f.endsWith(".js"))) {
@@ -29,7 +29,7 @@ for (const file of fs.readdirSync(commandsPath).filter((f) => f.endsWith(".js"))
   }
 }
 
-// ---------- إعداد Lavalink ----------
+// ---------- Lavalink setup ----------
 client.lavalink = new LavalinkManager({
   nodes: [
     {
@@ -38,7 +38,7 @@ client.lavalink = new LavalinkManager({
       host: LAVALINK_HOST || "lavalink",
       port: Number(LAVALINK_PORT) || 2333,
       secure: false,
-      retryAmount: Infinity, // يحاول يرجع يتصل بدون ما يوقف البوت نهائي
+      retryAmount: Infinity, // keep retrying forever instead of giving up
       retryDelay: 5000,
     },
   ],
@@ -56,64 +56,64 @@ client.lavalink = new LavalinkManager({
   },
 });
 
-// تمرير بيانات الـ Gateway الخام لمكتبة Lavalink (ضروري عشان تتبع حالة الصوت)
+// Forward raw gateway data to Lavalink (required for voice state tracking)
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
-// ---------- مراقبة حالة اتصال Lavalink ----------
+// ---------- Lavalink connection monitoring ----------
 client.lavalink.nodeManager.on("connect", (node) =>
-  console.log(`[Lavalink] متصل بنجاح بالعقدة: ${node.id}`)
+  console.log(`[Lavalink] Connected to node: ${node.id}`)
 );
 client.lavalink.nodeManager.on("disconnect", (node, reason) =>
-  console.warn(`[Lavalink] انقطع الاتصال بالعقدة ${node.id}:`, reason)
+  console.warn(`[Lavalink] Disconnected from node ${node.id}:`, reason)
 );
 client.lavalink.nodeManager.on("reconnecting", (node) =>
-  console.warn(`[Lavalink] جاري محاولة إعادة الاتصال بالعقدة ${node.id} ...`)
+  console.warn(`[Lavalink] Reconnecting to node ${node.id} ...`)
 );
 client.lavalink.nodeManager.on("error", (node, error) =>
-  console.error(`[Lavalink] خطأ بالعقدة ${node.id}:`, error)
+  console.error(`[Lavalink] Error on node ${node.id}:`, error)
 );
 
-// ---------- أحداث التشغيل ----------
+// ---------- Playback events ----------
 client.lavalink.on("trackError", (player, track, payload) => {
   console.error(
-    `[Player ${player.guildId}] خطأ بمقطع "${track?.info?.title}":`,
+    `[Player ${player.guildId}] Error on track "${track?.info?.title}":`,
     payload?.exception?.message || payload
   );
   const channel = client.channels.cache.get(player.textChannelId);
   if (channel?.isTextBased()) {
     channel
-      .send("صار خطأ بتشغيل هذا المقطع، راح أحاول أنتقل للي بعده.")
+      .send("There was an error playing that track, skipping to the next one.")
       .catch(() => {});
   }
 });
 
 client.lavalink.on("trackStuck", (player, track) => {
-  console.warn(`[Player ${player.guildId}] المقطع "${track?.info?.title}" توقف (stuck)`);
+  console.warn(`[Player ${player.guildId}] Track "${track?.info?.title}" got stuck`);
 });
 
 client.lavalink.on("queueEnd", (player) => {
   const channel = client.channels.cache.get(player.textChannelId);
   if (channel?.isTextBased()) {
-    channel.send("خلصت قائمة التشغيل.").catch(() => {});
+    channel.send("Queue finished.").catch(() => {});
   }
 });
 
 client.lavalink.on("playerDisconnect", (player) => {
-  console.log(`[Player ${player.guildId}] طلع من الروم الصوتي`);
+  console.log(`[Player ${player.guildId}] left the voice channel`);
 });
 
-// ---------- جاهزية البوت ----------
+// ---------- Bot ready ----------
 client.once(Events.ClientReady, async (c) => {
-  console.log(`تم تسجيل الدخول باسم ${c.user.tag}`);
+  console.log(`Logged in as ${c.user.tag}`);
   try {
     await client.lavalink.init({ id: c.user.id, username: c.user.username });
-    console.log("تم تهيئة Lavalink بنجاح.");
+    console.log("Lavalink initialized successfully.");
   } catch (error) {
-    console.error("فشل تهيئة Lavalink:", error);
+    console.error("Failed to initialize Lavalink:", error);
   }
 });
 
-// ---------- معالجة الأوامر ----------
+// ---------- Command handling ----------
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -123,9 +123,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
   try {
     await command.execute(interaction, client);
   } catch (error) {
-    console.error(`خطأ أثناء تنفيذ الأمر ${interaction.commandName}:`, error);
+    console.error(`Error executing command ${interaction.commandName}:`, error);
     const payload = {
-      content: "صار خطأ غير متوقع أثناء تنفيذ الأمر.",
+      content: "An unexpected error occurred while running this command.",
       ephemeral: true,
     };
     if (interaction.replied || interaction.deferred) {
@@ -136,7 +136,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ---------- حماية من تعطل العملية كاملة ----------
+// ---------- Prevent total process crashes ----------
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
@@ -144,15 +144,15 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
 });
 
-// ---------- إغلاق نظيف عند إيقاف الحاوية ----------
+// ---------- Graceful shutdown on container stop ----------
 async function shutdown(signal) {
-  console.log(`استلمت إشارة ${signal}، جاري الإغلاق بشكل نظيف...`);
+  console.log(`Received ${signal}, shutting down gracefully...`);
   try {
     for (const player of client.lavalink.players.values()) {
       await player.destroy().catch(() => {});
     }
   } catch (error) {
-    console.error("خطأ أثناء تنظيف المشغلات:", error);
+    console.error("Error while cleaning up players:", error);
   }
   client.destroy();
   process.exit(0);
