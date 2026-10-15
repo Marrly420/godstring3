@@ -4,9 +4,9 @@ server:
 
 lavalink:
   server:
-    password: "changeme" # يتم تجاوزها فعليًا عبر LAVALINK_SERVER_PASSWORD من docker-compose
+    password: "changeme" # overridden by LAVALINK_SERVER_PASSWORD from docker-compose
     sources:
-      youtube: false # يوتيوب يشتغل عبر الـ plugin تحت، مو المصدر المدمج (تم إيقافه رسميًا)
+      youtube: false # YouTube runs through the plugin below, not the deprecated built-in source
       bandcamp: true
       soundcloud: true
       twitch: true
@@ -34,9 +34,13 @@ plugins:
     allowDirectPlaylistIds: true
     clients:
       - MUSIC
+      - ANDROID_MUSIC
+      - IOS
+      - MWEB
       - WEB
       - WEBEMBEDDED
       - ANDROID_VR
+      - TVHTML5_SIMPLY
 
 metrics:
   prometheus:
